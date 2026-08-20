@@ -29,10 +29,32 @@ Rules:
 """
 
 
-def generate_response(prompt: str) -> InvestigationResponse:
+def generate_response(prompt: str, evidence: list[str]) -> InvestigationResponse:
+    evidence_text = "\n".join(
+        f"- {item}" for item in evidence
+    )
+
+    full_prompt = f"""
+Incident:
+{prompt}
+
+Relevant engineering evidence:
+{evidence_text}
+
+Analyze the incident using the evidence above.
+
+Important:
+- Base your conclusions on the provided evidence.
+- Do not invent logs, metrics, deployments, or other facts.
+- If the evidence is insufficient, clearly say so.
+- Distinguish confirmed evidence from possible explanations.
+"""
+  
+
+
     response = client.models.generate_content(
         model="gemini-3.6-flash",
-        contents=prompt,
+        contents=full_prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             response_mime_type="application/json",

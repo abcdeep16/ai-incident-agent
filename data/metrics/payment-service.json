@@ -1,0 +1,11 @@
+{
+  "service": "payment-service",
+  "timestamp": "2026-08-20T10:15:00Z",
+  "metrics": {
+    "error_rate": "38%",
+    "latency_p95": "2400ms",
+    "cpu_usage": "72%",
+    "memory_usage": "68%",
+    "database_connection_pool": "100%"
+  }
+}
