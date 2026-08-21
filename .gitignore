@@ -1,6 +1,13 @@
-node_modules/
-.venv/
+# Environment variables
 .env
+.env.*
+!.env.example
+
+# Python
+.venv/
 __pycache__/
 *.pyc
+
+# Node
+node_modules/
 dist/

@@ -26,25 +26,36 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/investigate",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(incident),
-        }
-      );
+  `${import.meta.env.VITE_API_URL}/api/investigate`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(incident),
+  }
+);
 
+      // Handle backend errors properly
       if (!response.ok) {
-        throw new Error("Failed to investigate incident");
+        const errorData = await response.json().catch(() => ({}));
+
+        throw new Error(
+          errorData.detail ||
+            errorData.error ||
+            `Request failed with status ${response.status}`
+        );
       }
 
       const data = await response.json();
 
       setResult(data);
     } catch (err) {
-      setError(err.message);
+      console.error("Investigation error:", err);
+
+      setError(
+        err.message || "Failed to investigate incident"
+      );
     } finally {
       setLoading(false);
     }
@@ -104,8 +115,14 @@ function App() {
         {loading ? "Investigating..." : "Investigate"}
       </button>
 
-      {error && <p>Error: {error}</p>}
+      {/* Error message */}
+      {error && (
+        <p>
+          Error: {error}
+        </p>
+      )}
 
+      {/* Investigation result */}
       {result && (
         <div>
           <h2>Investigation Result</h2>
@@ -120,18 +137,39 @@ function App() {
           <p>{result.confidence}</p>
 
           <h3>Evidence</h3>
-          <ul>
-            {result.evidence.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
+
+          {result.evidence && result.evidence.length > 0 ? (
+            <ul>
+              {result.evidence.map((item, index) => (
+                <li key={index}>
+                  <strong>{item.source}</strong>
+                  {" — "}
+                  <span>
+                    Similarity:{" "}
+                    {Number(item.similarity).toFixed(2)}
+                  </span>
+
+                  <br />
+
+                  {item.content}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No relevant evidence found.</p>
+          )}
 
           <h3>Next Steps</h3>
-          <ul>
-            {result.next_steps.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
+
+          {result.next_steps && result.next_steps.length > 0 ? (
+            <ul>
+              {result.next_steps.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>No next steps available.</p>
+          )}
         </div>
       )}
     </div>
