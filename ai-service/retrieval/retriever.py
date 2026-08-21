@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sklearn.metrics.pairwise import cosine_similarity
 
-from embeddings.embedder import model
+from embeddings.embedder import get_model
 from chunking.chunker import chunk_text
 
 
@@ -88,11 +88,13 @@ def retrieve_evidence(
     # 5. Create embeddings
     # --------------------------------------------------
 
+    model = get_model()
+
     query_embedding = model.encode([query])
 
     candidate_embeddings = model.encode(
         candidates
-    )
+)
 
     # --------------------------------------------------
     # 6. Calculate semantic similarity
