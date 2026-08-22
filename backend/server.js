@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const db = require("./db");
 require("dotenv").config();
-
+const pool = require("./db");
 const app = express();
 
 // ========================================
@@ -24,6 +25,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "http://localhost:5174",
       "https://ai-incident-frontend.onrender.com",
     ],
   })
@@ -124,8 +126,47 @@ Do not invent evidence that was not provided.
     // Parse AI response
     const result = await response.json();
 
-    // Return result to frontend
-    res.json(result);
+// Save investigation to PostgreSQL
+const savedIncident = await pool.query(
+  `
+  INSERT INTO incidents (
+    title,
+    description,
+    service,
+    severity,
+    summary,
+    root_cause,
+    confidence,
+    evidence,
+    next_steps
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  RETURNING id, created_at
+  `,
+  [
+    title,
+    description,
+    service,
+    severity,
+    result.summary,
+    result.root_cause,
+    result.confidence,
+    JSON.stringify(result.evidence || []),
+    JSON.stringify(result.next_steps || []),
+  ]
+);
+
+console.log(
+  "Incident saved to database:",
+  savedIncident.rows[0]
+);
+
+// Return result + database information
+res.json({
+  ...result,
+  incident_id: savedIncident.rows[0].id,
+  created_at: savedIncident.rows[0].created_at,
+});
 
   } catch (error) {
     console.error(
@@ -140,6 +181,39 @@ Do not invent evidence that was not provided.
   }
 });
 
+
+// ========================================
+// Incident History
+// ========================================
+
+app.get("/api/incidents", async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        id,
+        title,
+        description,
+        service,
+        severity,
+        summary,
+        root_cause,
+        confidence,
+        evidence,
+        next_steps,
+        created_at
+      FROM incidents
+      ORDER BY created_at DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Failed to fetch incidents:", error);
+
+    res.status(500).json({
+      error: "Failed to fetch incidents",
+    });
+  }
+});
 // ========================================
 // Start Server
 // ========================================
