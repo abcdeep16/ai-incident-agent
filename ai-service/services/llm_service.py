@@ -229,7 +229,6 @@ Important rules:
 - If the evidence is insufficient, clearly say so.
 """
 
-
     # ==================================================
     # 5. Call Gemini
     # ==================================================
@@ -258,25 +257,24 @@ Important rules:
         # ----------------------------------------------
         if "503" in str(error) or "UNAVAILABLE" in str(error):
             raise HTTPException(
-        status_code=503,
-        detail=(
-            "Gemini is temporarily unavailable due to high demand. "
-            "Please try again in a few moments."
-        )
-    )
+                status_code=503,
+                detail=(
+                    "Gemini is temporarily unavailable due to high demand. "
+                    "Please try again in a few moments."
+                )
+            )
 
         if (
-             "RESOURCE_EXHAUSTED" in str(error)
+            "RESOURCE_EXHAUSTED" in str(error)
             or "429" in str(error)
-):
+        ):
             raise HTTPException(
-        status_code=429,
-        detail=(
-            "Gemini API quota exceeded. "
-            "Please try again after the quota resets."
-        )
-    )
-            
+                status_code=429,
+                detail=(
+                    "Gemini API quota exceeded. "
+                    "Please try again after the quota resets."
+                )
+            )
 
         # ----------------------------------------------
         # Other Gemini errors
@@ -353,6 +351,7 @@ Important rules:
 
             elif content.startswith("[DEPLOYMENT]"):
                 content = content[len("[DEPLOYMENT]"):].strip()
+
             # ------------------------------------------
             # Create structured evidence
             # ------------------------------------------

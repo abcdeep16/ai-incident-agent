@@ -1,11 +1,13 @@
 {
   "service": "payment-service",
-  "timestamp": "2026-08-20T10:15:00Z",
+  "window": "2026-08-20T10:10:00Z/2026-08-20T10:20:00Z",
   "metrics": {
-    "error_rate": "38%",
-    "latency_p95": "2400ms",
-    "cpu_usage": "72%",
-    "memory_usage": "68%",
-    "database_connection_pool": "100%"
-  }
+    "http_500_count": 47,
+    "http_200_count": 12,
+    "average_latency_ms": 4200,
+    "database_connection_errors": 39,
+    "database_connection_pool_saturation_percent": 98,
+    "error_rate_percent": 79.6
+  },
+  "notes": "Error rate spiked sharply at 10:15:04Z, correlating with database connection failures to host payment-db shortly after the v2.4.1 deployment completed."
 }

@@ -1,8 +1,12 @@
 {
   "service": "payment-service",
-  "deployment_id": "deploy-8472",
-  "timestamp": "2026-08-20T10:05:00Z",
   "version": "v2.4.1",
+  "deployed_at": "2026-08-20T10:16:00Z",
+  "changes": [
+    "Updated database connection pool configuration",
+    "Reduced database connection timeout from 10s to 3s",
+    "Changed payment-db connection string to use new internal hostname"
+  ],
   "previous_version": "v2.4.0",
-  "status": "successful"
+  "rollback_available": true
 }

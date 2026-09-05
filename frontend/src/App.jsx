@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./index.css";
 
 function App() {
   const [incident, setIncident] = useState({
@@ -79,7 +80,8 @@ function App() {
           .catch(() => ({}));
 
         throw new Error(
-          errorData.detail ||
+          errorData.details ||
+            errorData.detail ||
             errorData.error ||
             `Request failed with status ${response.status}`
         );
@@ -264,6 +266,14 @@ function App() {
 
               </div>
 
+              {loading && (
+                <div className="hint">
+                  If this is the first request in a while, the AI
+                  service may be waking up from an idle state — this
+                  can take up to a minute.
+                </div>
+              )}
+
               {error && (
                 <div className="error">
                   {error}
@@ -290,6 +300,12 @@ function App() {
                   context and retrieved evidence.
                 </p>
               </div>
+
+              {result.warning && (
+                <div className="result-section">
+                  <div className="error">{result.warning}</div>
+                </div>
+              )}
 
               {/* Summary */}
 

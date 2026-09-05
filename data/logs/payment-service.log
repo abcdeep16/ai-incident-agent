@@ -1,8 +1,10 @@
-2026-08-20T10:14:52Z INFO Payment service started request processing
-2026-08-20T10:15:03Z INFO Payment request received transaction_id=tx_7821
-2026-08-20T10:15:04Z ERROR Database connection failed host=payment-db
-2026-08-20T10:15:04Z ERROR Failed to process payment transaction_id=tx_7821
+2026-08-20T10:14:58Z INFO Starting payment processing for order=8841
+2026-08-20T10:15:01Z WARN Database connection pool nearing capacity host=payment-db
 2026-08-20T10:15:04Z ERROR HTTP 500 returned endpoint=/api/payment
-2026-08-20T10:15:08Z ERROR Database connection failed host=payment-db
-2026-08-20T10:15:12Z ERROR Database connection failed host=payment-db
-2026-08-20T10:15:20Z WARN Connection pool exhausted
+2026-08-20T10:15:04Z ERROR Database connection failed host=payment-db
+2026-08-20T10:15:05Z ERROR Database connection failed host=payment-db
+2026-08-20T10:15:06Z CRITICAL Payment processing unavailable due to database timeout
+2026-08-20T10:15:07Z ERROR Database connection failed host=payment-db
+2026-08-20T10:15:10Z ERROR Retry attempt failed for order=8841 exception=ConnectionRefusedError
+2026-08-20T10:15:12Z WARN Circuit breaker opened for payment-db after repeated failures
+2026-08-20T10:16:00Z INFO Deployment payment-service:v2.4.1 completed

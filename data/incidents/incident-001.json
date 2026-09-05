@@ -1,9 +1,0 @@
-{
-  "incident_id": "INC-001",
-  "title": "Payment Service HTTP 500 Errors",
-  "service": "payment-service",
-  "severity": "high",
-  "status": "investigating",
-  "description": "Payment requests started returning HTTP 500 errors after a recent deployment.",
-  "started_at": "2026-08-20T10:15:00Z"
-}

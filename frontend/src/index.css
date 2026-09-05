@@ -40,10 +40,6 @@
   --radius: 12px;
 }
 
-/* ========================================
-   Reset
-   ======================================== */
-
 * {
   box-sizing: border-box;
 }
@@ -76,42 +72,24 @@ button {
   cursor: pointer;
 }
 
-/* ========================================
-   Root
-   ======================================== */
-
 #root {
   width: 100%;
   min-height: 100vh;
 }
 
-/* ========================================
-   App Layout
-   ======================================== */
-
 .app {
   min-height: 100vh;
 }
 
-/* ========================================
-   Navbar
-   ======================================== */
-
 .navbar {
   height: 72px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   padding: 0 40px;
-
   border-bottom: 1px solid var(--border);
-
   background: rgba(11, 15, 25, 0.85);
-
   backdrop-filter: blur(14px);
-
   position: sticky;
   top: 0;
   z-index: 100;
@@ -126,18 +104,10 @@ button {
 .brand-icon {
   width: 38px;
   height: 38px;
-
   display: grid;
   place-items: center;
-
   border-radius: 10px;
-
-  background: linear-gradient(
-    135deg,
-    #8b5cf6,
-    #6366f1
-  );
-
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
   font-size: 19px;
 }
 
@@ -156,7 +126,6 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-
   font-size: 13px;
   color: var(--text-muted);
 }
@@ -164,31 +133,18 @@ button {
 .status-dot {
   width: 8px;
   height: 8px;
-
   border-radius: 50%;
-
   background: var(--success);
-
   box-shadow:
     0 0 0 4px rgba(34, 197, 94, 0.1),
     0 0 12px rgba(34, 197, 94, 0.5);
 }
 
-/* ========================================
-   Main Container
-   ======================================== */
-
 .dashboard {
   width: min(1200px, calc(100% - 40px));
-
   margin: 0 auto;
-
   padding: 48px 0 80px;
 }
-
-/* ========================================
-   Hero
-   ======================================== */
 
 .hero {
   margin-bottom: 36px;
@@ -198,17 +154,11 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
   padding: 6px 12px;
-
   border: 1px solid rgba(139, 92, 246, 0.3);
-
   border-radius: 999px;
-
   background: var(--primary-soft);
-
   color: #c4b5fd;
-
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -217,87 +167,52 @@ button {
 
 .hero h1 {
   margin: 18px 0 10px;
-
   font-size: clamp(34px, 5vw, 52px);
-
   line-height: 1.05;
-
   letter-spacing: -0.04em;
-
   color: #f8fafc;
 }
 
 .hero p {
   max-width: 680px;
-
   margin: 0;
-
   color: var(--text-muted);
-
   font-size: 16px;
-
   line-height: 1.7;
 }
 
-/* ========================================
-   Grid
-   ======================================== */
-
 .dashboard-grid {
   display: grid;
-
-  grid-template-columns:
-    minmax(0, 1.1fr)
-    minmax(340px, 0.9fr);
-
+  grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
   gap: 24px;
-
   align-items: start;
 }
 
-/* ========================================
-   Cards
-   ======================================== */
-
 .card {
   background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.025),
-      rgba(255, 255, 255, 0)
-    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
     var(--card);
-
   border: 1px solid var(--border);
-
   border-radius: var(--radius);
-
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.18);
-
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
 .card-header {
   padding: 22px 24px;
-
   border-bottom: 1px solid var(--border);
 }
 
 .card-title {
   margin: 0;
-
   color: #f8fafc;
-
   font-size: 16px;
   font-weight: 700;
 }
 
 .card-description {
   margin: 6px 0 0;
-
   color: var(--text-muted);
-
   font-size: 13px;
 }
 
@@ -305,21 +220,14 @@ button {
   padding: 24px;
 }
 
-/* ========================================
-   Form
-   ======================================== */
-
 .form-group {
   margin-bottom: 20px;
 }
 
 .form-label {
   display: block;
-
   margin-bottom: 8px;
-
   color: #cbd5e1;
-
   font-size: 13px;
   font-weight: 600;
 }
@@ -328,37 +236,24 @@ button {
 .form-select,
 .form-textarea {
   width: 100%;
-
   border: 1px solid var(--border-light);
-
   border-radius: 9px;
-
   background: #0f1523;
-
   color: #f8fafc;
-
   outline: none;
-
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .form-input,
 .form-select {
   height: 46px;
-
   padding: 0 14px;
 }
 
 .form-textarea {
   min-height: 150px;
-
   padding: 14px;
-
   resize: vertical;
-
   line-height: 1.6;
 }
 
@@ -371,41 +266,24 @@ button {
 .form-select:focus,
 .form-textarea:focus {
   border-color: var(--primary);
-
   background: #111827;
-
-  box-shadow:
-    0 0 0 3px rgba(139, 92, 246, 0.12);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
 }
-
-/* ========================================
-   Buttons
-   ======================================== */
 
 .button-row {
   display: flex;
-
   gap: 10px;
-
   margin-top: 24px;
 }
 
 .btn {
   min-height: 44px;
-
   padding: 0 18px;
-
   border: 1px solid transparent;
-
   border-radius: 9px;
-
   font-size: 14px;
   font-weight: 600;
-
-  transition:
-    transform 0.15s,
-    background 0.2s,
-    border-color 0.2s;
+  transition: transform 0.15s, background 0.2s, border-color 0.2s;
 }
 
 .btn:hover {
@@ -414,7 +292,6 @@ button {
 
 .btn-primary {
   background: var(--primary);
-
   color: white;
 }
 
@@ -424,9 +301,7 @@ button {
 
 .btn-secondary {
   background: #182235;
-
   border-color: var(--border-light);
-
   color: #cbd5e1;
 }
 
@@ -436,35 +311,30 @@ button {
 
 .btn:disabled {
   cursor: not-allowed;
-
   opacity: 0.55;
-
   transform: none;
 }
 
-/* ========================================
-   Error
-   ======================================== */
+.hint {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 9px;
+  background: rgba(56, 189, 248, 0.08);
+  color: #93c5fd;
+  font-size: 12px;
+  line-height: 1.6;
+}
 
 .error {
   margin-top: 16px;
-
   padding: 12px 14px;
-
   border: 1px solid rgba(239, 68, 68, 0.3);
-
   border-radius: 9px;
-
   background: rgba(239, 68, 68, 0.08);
-
   color: #fca5a5;
-
   font-size: 13px;
 }
-
-/* ========================================
-   Result
-   ======================================== */
 
 .result-card {
   margin-top: 24px;
@@ -472,7 +342,6 @@ button {
 
 .result-section {
   padding: 20px 24px;
-
   border-bottom: 1px solid var(--border);
 }
 
@@ -482,218 +351,132 @@ button {
 
 .section-label {
   margin: 0 0 10px;
-
   color: #94a3b8;
-
   font-size: 12px;
-
   font-weight: 700;
-
   letter-spacing: 0.08em;
-
   text-transform: uppercase;
 }
 
 .result-text {
   margin: 0;
-
   color: #dbe4f0;
-
   font-size: 15px;
-
   line-height: 1.75;
 }
 
-/* ========================================
-   Confidence
-   ======================================== */
-
 .confidence {
   display: flex;
-
   align-items: center;
-
   gap: 14px;
 }
 
 .confidence-value {
   font-size: 28px;
-
   font-weight: 700;
-
   color: #a78bfa;
 }
 
 .confidence-bar {
   flex: 1;
-
   height: 8px;
-
   overflow: hidden;
-
   border-radius: 999px;
-
   background: #202938;
 }
 
 .confidence-fill {
   height: 100%;
-
   border-radius: inherit;
-
-  background: linear-gradient(
-    90deg,
-    #6366f1,
-    #a78bfa
-  );
+  background: linear-gradient(90deg, #6366f1, #a78bfa);
 }
-
-/* ========================================
-   Evidence
-   ======================================== */
 
 .evidence-list {
   display: flex;
-
   flex-direction: column;
-
   gap: 10px;
-
   margin: 0;
-
   padding: 0;
-
   list-style: none;
 }
 
 .evidence-item {
   padding: 14px;
-
   border: 1px solid var(--border);
-
   border-radius: 9px;
-
   background: #101725;
 }
 
 .evidence-top {
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   gap: 10px;
-
   margin-bottom: 8px;
 }
 
 .evidence-source {
   color: #c4b5fd;
-
   font-size: 12px;
-
   font-weight: 700;
-
   letter-spacing: 0.05em;
 }
 
 .similarity {
   padding: 3px 8px;
-
   border-radius: 999px;
-
   background: rgba(56, 189, 248, 0.1);
-
   color: #7dd3fc;
-
   font-size: 11px;
-
   font-weight: 600;
 }
 
 .evidence-content {
   color: #94a3b8;
-
   font-family: ui-monospace, Consolas, monospace;
-
   font-size: 12px;
-
   line-height: 1.7;
-
   word-break: break-word;
 }
 
-/* ========================================
-   Next Steps
-   ======================================== */
-
 .steps-list {
   display: flex;
-
   flex-direction: column;
-
   gap: 10px;
-
   margin: 0;
-
   padding: 0;
-
   list-style: none;
 }
 
 .step-item {
   display: flex;
-
   gap: 10px;
-
   align-items: flex-start;
-
   color: #cbd5e1;
-
   font-size: 14px;
-
   line-height: 1.6;
 }
 
 .step-number {
   flex: 0 0 24px;
-
   width: 24px;
   height: 24px;
-
   display: grid;
-
   place-items: center;
-
   border-radius: 50%;
-
   background: rgba(34, 197, 94, 0.1);
-
   color: #4ade80;
-
   font-size: 11px;
-
   font-weight: 700;
 }
 
-/* ========================================
-   Severity
-   ======================================== */
-
 .severity {
   display: inline-flex;
-
   align-items: center;
-
   padding: 4px 9px;
-
   border-radius: 999px;
-
   font-size: 11px;
-
   font-weight: 700;
-
   text-transform: uppercase;
 }
 
@@ -717,108 +500,67 @@ button {
   color: #f87171;
 }
 
-/* ========================================
-   History
-   ======================================== */
-
 .history-card {
   margin-top: 24px;
 }
 
 .history-list {
   display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-
   margin: 0;
-
   padding: 24px;
-
   list-style: none;
 }
 
 .history-item {
   padding: 18px;
-
   border: 1px solid var(--border);
-
   border-radius: 10px;
-
   background: #101725;
-
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 
 .history-item:hover {
   border-color: #3b4961;
-
   background: var(--card-hover);
 }
 
 .history-title {
   margin: 0 0 12px;
-
   color: #f8fafc;
-
   font-size: 15px;
-
   font-weight: 700;
 }
 
 .history-meta {
   display: flex;
-
   flex-wrap: wrap;
-
   align-items: center;
-
   gap: 8px;
-
   margin-bottom: 12px;
-
   color: var(--text-muted);
-
   font-size: 12px;
 }
 
 .history-root {
   color: #94a3b8;
-
   font-size: 13px;
-
   line-height: 1.6;
 }
 
 .history-date {
   margin-top: 12px;
-
   color: var(--text-dim);
-
   font-size: 11px;
 }
 
-/* ========================================
-   Empty State
-   ======================================== */
-
 .empty {
   padding: 40px 24px;
-
   text-align: center;
-
   color: var(--text-dim);
-
   font-size: 14px;
 }
-
-/* ========================================
-   Responsive
-   ======================================== */
 
 @media (max-width: 900px) {
   .dashboard-grid {
@@ -833,7 +575,6 @@ button {
 @media (max-width: 600px) {
   .navbar {
     height: 64px;
-
     padding: 0 18px;
   }
 
@@ -847,7 +588,6 @@ button {
 
   .dashboard {
     width: min(100% - 24px, 1200px);
-
     padding: 28px 0 50px;
   }
 
