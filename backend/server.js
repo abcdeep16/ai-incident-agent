@@ -68,6 +68,10 @@ app.use(express.json());
 // Health Check
 // ========================================
 
+app.head("/health", (req, res) => {
+  res.sendStatus(200);
+});
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
