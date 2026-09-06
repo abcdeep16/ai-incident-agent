@@ -246,7 +246,13 @@ Important rules:
     for attempt in range(1, GEMINI_MAX_RETRIES + 2):
         try:
             response = client.models.generate_content(
-                model="gemini-3.6-flash",
+                # gemini-3.6-flash is Google's newest flagship (launched
+                # July 21, 2026) and gets hit with very high global demand,
+                # causing frequent 503 UNAVAILABLE errors. gemini-2.5-flash
+                # is a stable, high-throughput model that is far less prone
+                # to overload — use it unless you specifically need 3.6's
+                # newer capabilities.
+                model="gemini-2.5-flash",
                 contents=full_prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT,
