@@ -14,6 +14,16 @@ from models.investigation import InvestigationResponse, EvidenceItem
 GEMINI_MAX_RETRIES = 2
 GEMINI_RETRY_DELAY_SECONDS = 3
 
+# Try these models in order. gemini-3.6-flash is the primary (currently
+# the correct model for new API accounts). gemini-flash-latest is an
+# alias Google keeps pointed at whatever their current stable Flash
+# release is, used only as a fallback if 3.6-flash is still overloaded
+# after all retries.
+GEMINI_MODEL_CANDIDATES = [
+    "gemini-3.6-flash",
+    "gemini-flash-latest",
+]
+
 
 # ==================================================
 # Environment / Gemini Client
@@ -243,54 +253,87 @@ Important rules:
     response = None
     last_error = None
 
-    for attempt in range(1, GEMINI_MAX_RETRIES + 2):
-        try:
-            response = client.models.generate_content(
-                # gemini-3.6-flash is Google's newest flagship (launched
-                # July 21, 2026) and gets hit with very high global demand,
-                # causing frequent 503 UNAVAILABLE errors. gemini-2.5-flash
-                # is a stable, high-throughput model that is far less prone
-                # to overload — use it unless you specifically need 3.6's
-                # newer capabilities.
-                model="gemini-2.5-flash",
-                contents=full_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    response_schema=InvestigationResponse,
-                ),
-            )
+    for model_name in GEMINI_MODEL_CANDIDATES:
 
-            last_error = None
+        model_exhausted = False
+
+        for attempt in range(1, GEMINI_MAX_RETRIES + 2):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=full_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_PROMPT,
+                        response_mime_type="application/json",
+                        response_schema=InvestigationResponse,
+                    ),
+                )
+
+                last_error = None
+                break
+
+            except Exception as error:
+
+                last_error = error
+
+                print("========================================")
+                print(f"GEMINI ERROR (model={model_name}, attempt {attempt}):")
+                print(repr(error))
+                print("========================================")
+
+                error_text = str(error)
+
+                is_overloaded = (
+                    "503" in error_text or "UNAVAILABLE" in error_text
+                )
+                is_model_unavailable = (
+                    "404" in error_text or "NOT_FOUND" in error_text
+                )
+                is_quota_exhausted = (
+                    "RESOURCE_EXHAUSTED" in error_text
+                    or "429" in error_text
+                )
+
+                has_retries_left = attempt <= GEMINI_MAX_RETRIES
+
+                if is_overloaded and has_retries_left:
+                    print(
+                        f"Gemini overloaded on {model_name}, retrying in "
+                        f"{GEMINI_RETRY_DELAY_SECONDS}s "
+                        f"(attempt {attempt}/{GEMINI_MAX_RETRIES})..."
+                    )
+                    time.sleep(GEMINI_RETRY_DELAY_SECONDS)
+                    continue
+
+                if is_overloaded or is_model_unavailable:
+                    # Give up on this model, fall through to the next
+                    # candidate model (if any).
+                    model_exhausted = True
+                    break
+
+                if is_quota_exhausted:
+                    # Project-level quota is shared across models, so
+                    # trying another model won't help — fail immediately.
+                    raise HTTPException(
+                        status_code=429,
+                        detail=(
+                            "Gemini API quota exceeded. "
+                            "Please try again after the quota resets."
+                        )
+                    )
+
+                # Unknown/non-retryable error — stop entirely.
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"AI service error: {str(error)}"
+                )
+
+        if last_error is None:
+            # Success — stop trying further models.
             break
 
-        except Exception as error:
-
-            last_error = error
-
-            print("========================================")
-            print(f"GEMINI ERROR (attempt {attempt}):")
-            print(repr(error))
-            print("========================================")
-
-            # Only retry on transient overload — not on quota/auth errors,
-            # which won't be fixed by waiting a few seconds.
-            is_overloaded = (
-                "503" in str(error) or "UNAVAILABLE" in str(error)
-            )
-
-            has_retries_left = attempt <= GEMINI_MAX_RETRIES
-
-            if is_overloaded and has_retries_left:
-                print(
-                    f"Gemini overloaded, retrying in "
-                    f"{GEMINI_RETRY_DELAY_SECONDS}s "
-                    f"(attempt {attempt}/{GEMINI_MAX_RETRIES})..."
-                )
-                time.sleep(GEMINI_RETRY_DELAY_SECONDS)
-                continue
-
-            # Not retryable, or out of retries — break and handle below.
+        if not model_exhausted:
+            # Shouldn't normally get here, but guard against infinite loop.
             break
 
     if last_error is not None:
@@ -303,7 +346,8 @@ Important rules:
                 status_code=503,
                 detail=(
                     "Gemini is temporarily unavailable due to high demand "
-                    f"(tried {GEMINI_MAX_RETRIES + 1} times). "
+                    f"(tried {len(GEMINI_MODEL_CANDIDATES)} model(s), "
+                    f"{GEMINI_MAX_RETRIES + 1} attempts each). "
                     "Please try again in a few moments."
                 )
             )
