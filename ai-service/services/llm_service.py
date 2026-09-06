@@ -1,4 +1,5 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from fastapi import HTTPException
@@ -6,6 +7,12 @@ from google import genai
 from google.genai import types
 
 from models.investigation import InvestigationResponse, EvidenceItem
+
+# Gemini occasionally returns 503 "model is currently experiencing high
+# demand" — this is transient overload on Google's side, not our bug.
+# Retry a couple of times with a short backoff before giving up.
+GEMINI_MAX_RETRIES = 2
+GEMINI_RETRY_DELAY_SECONDS = 3
 
 
 # ==================================================
@@ -233,40 +240,71 @@ Important rules:
     # 5. Call Gemini
     # ==================================================
 
-    try:
+    response = None
+    last_error = None
 
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=full_prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json",
-                response_schema=InvestigationResponse,
-            ),
-        )
+    for attempt in range(1, GEMINI_MAX_RETRIES + 2):
+        try:
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=full_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    response_mime_type="application/json",
+                    response_schema=InvestigationResponse,
+                ),
+            )
 
-    except Exception as error:
+            last_error = None
+            break
 
-        print("========================================")
-        print("GEMINI ERROR:")
-        print(repr(error))
-        print("========================================")
+        except Exception as error:
+
+            last_error = error
+
+            print("========================================")
+            print(f"GEMINI ERROR (attempt {attempt}):")
+            print(repr(error))
+            print("========================================")
+
+            # Only retry on transient overload — not on quota/auth errors,
+            # which won't be fixed by waiting a few seconds.
+            is_overloaded = (
+                "503" in str(error) or "UNAVAILABLE" in str(error)
+            )
+
+            has_retries_left = attempt <= GEMINI_MAX_RETRIES
+
+            if is_overloaded and has_retries_left:
+                print(
+                    f"Gemini overloaded, retrying in "
+                    f"{GEMINI_RETRY_DELAY_SECONDS}s "
+                    f"(attempt {attempt}/{GEMINI_MAX_RETRIES})..."
+                )
+                time.sleep(GEMINI_RETRY_DELAY_SECONDS)
+                continue
+
+            # Not retryable, or out of retries — break and handle below.
+            break
+
+    if last_error is not None:
 
         # ----------------------------------------------
-        # Gemini quota / rate limit
+        # Gemini overloaded (still failing after retries)
         # ----------------------------------------------
-        if "503" in str(error) or "UNAVAILABLE" in str(error):
+        if "503" in str(last_error) or "UNAVAILABLE" in str(last_error):
             raise HTTPException(
                 status_code=503,
                 detail=(
-                    "Gemini is temporarily unavailable due to high demand. "
+                    "Gemini is temporarily unavailable due to high demand "
+                    f"(tried {GEMINI_MAX_RETRIES + 1} times). "
                     "Please try again in a few moments."
                 )
             )
 
         if (
-            "RESOURCE_EXHAUSTED" in str(error)
-            or "429" in str(error)
+            "RESOURCE_EXHAUSTED" in str(last_error)
+            or "429" in str(last_error)
         ):
             raise HTTPException(
                 status_code=429,
@@ -282,7 +320,7 @@ Important rules:
 
         raise HTTPException(
             status_code=502,
-            detail=f"AI service error: {str(error)}"
+            detail=f"AI service error: {str(last_error)}"
         )
 
     # ==================================================
