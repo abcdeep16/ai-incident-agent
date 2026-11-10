@@ -1,6 +1,10 @@
 import { useState } from "react";
 import "./index.css";
 
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
+
 function App() {
   const [incident, setIncident] = useState({
     title: "",
@@ -32,7 +36,7 @@ function App() {
       setError("");
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/incidents`
+        `${API_URL}/api/incidents`
       );
 
       if (!response.ok) {
@@ -64,7 +68,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/investigate`,
+        `${API_URL}/api/investigate`,
         {
           method: "POST",
           headers: {

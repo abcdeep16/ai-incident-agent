@@ -29,7 +29,12 @@ const ALLOWED_ORIGINS = FRONTEND_URL.split(",")
 
 // Always allow common local dev ports too, so local dev never breaks
 // even if FRONTEND_URL in .env only lists the production URL.
-const DEV_ORIGINS = ["http://localhost:5173", "http://localhost:5174"];
+const DEV_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+];
 
 const FINAL_ALLOWED_ORIGINS = Array.from(
   new Set([...ALLOWED_ORIGINS, ...DEV_ORIGINS])

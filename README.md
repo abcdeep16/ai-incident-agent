@@ -1,235 +1,199 @@
-# AI Incident Agent
+﻿# AI Incident Agent
 
-An AI-powered production incident investigation system. A user submits an
-incident (title, service, severity, description); the system retrieves
-relevant evidence (logs, metrics, deployment history) using semantic
-search, sends it to Gemini for root-cause analysis, and stores the result
-in PostgreSQL for later review.
+## Mandatory instructions for AI assistants
 
-Live demo: `https://ai-incident-agent-frontend.onrender.com` *(may take
-30–60s to respond on first load if idle — see "Uptime & Free-Tier
-Behavior" below)*
+Before making any change in this repository, every AI assistant must read
+[AI_RULES.md](./AI_RULES.md) first, then read the relevant project documents
+listed there. Treat documentation as a guide, not a substitute for verifying
+the current implementation. If documentation and code disagree, verify the
+code and update the documentation.
 
----
+Project reference documents:
+[PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md),
+[ARCHITECTURE.md](./ARCHITECTURE.md),
+[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md),
+[API_DOCUMENTATION.md](./API_DOCUMENTATION.md),
+[KNOWN_ISSUES.md](./KNOWN_ISSUES.md),
+[DECISIONS.md](./DECISIONS.md), and
+[CHANGELOG.md](./CHANGELOG.md).
+
+This project is a full-stack incident investigation application that now uses a locally trained anomaly-detection model instead of an external AI API. The system still accepts incident submissions through the frontend and backend, but the AI analysis step is served by a local Python model trained on the repository's raw log corpora.
+
+## Current status
+
+- Local model training is working.
+- Local inference is working through the AI service.
+- External AI providers such as Gemini are no longer required.
+- The backend still supports PostgreSQL-backed persistence when `DATABASE_URL` is configured, but the main investigation flow does not depend on an external LLM service.
+- The project is functional in local development mode with the model-backed pipeline.
+
+## Project goal
+
+Use the raw log datasets in the repository to train, save, and load a local classifier that can detect abnormal incident text patterns, provide structured investigation output, and keep the application working without remote AI calls.
 
 ## Architecture
 
-```
-Frontend (React + Vite, static site)
-   ↓ VITE_API_URL
+```text
+Frontend (React + Vite)
+    |
+    v
 Backend (Node.js + Express)
-   ↓ AI_SERVICE_URL
+    |
+    +--> calls local AI service at http://127.0.0.1:8000
+    |
+    v
 AI Service (Python + FastAPI)
-   ↓
-Retrieval (cosine similarity over logs/metrics/deployments)
-   ↓
-Gemini API (root cause analysis)
-   ↓
-Backend
-   ↓ DATABASE_URL
-PostgreSQL (Supabase)
-   ↓
-Frontend (renders result + incident history)
+    |
+    +--> loads saved local model artifact
+    +--> preprocesses prompt text
+    +--> predicts anomaly vs normal signal
+    +--> returns structured investigation result
+    v
+(Optional) PostgreSQL for persistence when DATABASE_URL is set
 ```
 
-**Repo layout:**
-```
+## Data sources used for training
+
+The model is trained on the raw system logs found in:
+
+- `backend/data/raw/loghub/`
+- `backend/data/raw/laghub/`
+- `data/raw/loghub/` when present
+
+The repository includes these log files:
+
+- `BGL_2k.log`
+- `HDFS_2k.log`
+- `OpenStack_2k.log`
+
+These are heterogeneous plain-text log corpora. The project treats them as a combined anomaly-detection corpus rather than a single tabular dataset. Each log line is normalized, deduplicated, and labeled with a rule-based anomaly heuristic based on common failure signals like `error`, `fatal`, `failed`, `exception`, `timeout`, `crash`, and related patterns.
+
+## Training workflow
+
+The training pipeline is implemented in `ai-service/train_local_model.py` and performs the following:
+
+1. discovers `*.log` files directly under the supported raw data locations,
+2. strips empty/duplicate log lines,
+3. assigns anomaly labels using keyword-based heuristics,
+4. splits the dataset into train and test subsets with stratification,
+5. trains a `TF-IDF + LogisticRegression` pipeline,
+6. saves the trained model and evaluation artifacts.
+
+## Model and artifacts
+
+Artifacts are saved under `ai-service/artifacts/`:
+
+- `log_anomaly_pipeline.joblib` — trained local ML pipeline
+- `processed_log_dataset.csv` — cleaned dataset used for training
+- `training_metrics.json` — validation metrics and confusion matrix
+
+## Inference flow
+
+The AI service loads the saved model through `ai-service/services/local_model_service.py` and exposes a local model endpoint in `ai-service/main.py`.
+
+- `GET /health` returns service status
+- `POST /generate` accepts `{ prompt, service }` and returns a structured investigation result
+
+The backend calls this endpoint through `backend/server.js`.
+
+## Training results
+
+The model was evaluated on a held-out split of the raw log corpus. The latest measured metrics are:
+
+- accuracy: 0.9975
+- precision: 0.9845
+- recall: 1.0000
+- F1: 0.9922
+- ROC-AUC: 1.0000
+
+These metrics are appropriate for a local prototype trained on the repository's raw log corpus. They should be treated as project-specific validation metrics rather than a production benchmark.
+
+## Removed external AI dependencies
+
+The project no longer depends on Gemini or any external AI API for the incident-analysis flow.
+
+Relevant cleanup includes:
+
+- the Python AI service uses the local model instead of remote generation,
+- the dependency list no longer requires the Google AI SDK,
+- `.env.example` templates do not require a remote API key for the main workflow,
+- the README no longer documents a Gemini-based production path.
+
+## Repository structure
+
+```text
 ai-incident-agent/
-├── backend/            Node.js + Express API, PostgreSQL access
-├── frontend/            React + Vite dashboard UI
-├── ai-service/           FastAPI service: retrieval, embeddings, Gemini
-├── data/                 Sample logs/metrics/deployments per service
-├── db/schema.sql          Reference copy of the incidents table schema
-└── README.md
+├── ai-service/
+│   ├── artifacts/
+│   │   ├── log_anomaly_pipeline.joblib
+│   │   ├── processed_log_dataset.csv
+│   │   └── training_metrics.json
+│   ├── services/
+│   │   ├── llm_service.py
+│   │   └── local_model_service.py
+│   ├── main.py
+│   ├── requirements.txt
+│   ├── train_local_model.py
+│   └── .env.example
+├── backend/
+│   ├── db.js
+│   ├── server.js
+│   ├── .env.example
+│   └── package.json
+├── frontend/
+│   └── ...
+├── data/
+│   └── raw/
+│       └── loghub/
+├── backend/data/raw/
+│   └── loghub/
+│   └── laghub/
+├── README.md
+└── LICENSE
 ```
 
----
+## Local development quick start
 
-## Local setup
-
-**Prerequisites:** Node.js 18+, Python 3.11+, a Supabase (or any) PostgreSQL
-database, a Gemini API key from [Google AI Studio](https://aistudio.google.com).
+### 1. Install Python dependencies
 
 ```bash
-# 1. AI service
 cd ai-service
-pip install -r requirements.txt
-cp .env.example .env        # fill in GEMINI_API_KEY
-uvicorn main:app --host 0.0.0.0 --port 8000
+python -m pip install -r requirements.txt
+```
 
-# 2. Backend (new terminal)
+### 2. Train the local model
+
+```bash
+cd ai-service
+python train_local_model.py
+```
+
+### 3. Start the AI service
+
+```bash
+cd ai-service
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+### 4. Start the backend
+
+```bash
 cd backend
 npm install
-cp .env.example .env        # fill in DATABASE_URL
 node server.js
-
-# 3. Frontend (new terminal)
-cd frontend
-npm install
-cp .env.example .env        # VITE_API_URL=http://localhost:5000
-npm run dev
-```
-Open the URL Vite prints (usually `http://localhost:5173`).
-
----
-
-## Environment variables
-
-| File | Key | Notes |
-|---|---|---|
-| `backend/.env` | `PORT` | Defaults to 5000 locally; Render sets this automatically in production — don't set it there |
-| | `AI_SERVICE_URL` | AI service base URL |
-| | `FRONTEND_URL` | Frontend URL(s), comma-separated if multiple, used for CORS |
-| | `DATABASE_URL` | Full Postgres connection string (from Supabase → Settings → Database → URI) |
-| `ai-service/.env` | `FRONTEND_URL` | Same as above |
-| | `GEMINI_API_KEY` | From Google AI Studio |
-| `frontend/.env` | `VITE_API_URL` | Backend base URL. Baked in at **build** time — changing it requires a rebuild, not just a restart |
-
-**Never commit real `.env` files** — only `.env.example` files with placeholders should be tracked in git. If any real key/password was ever pasted somewhere it shouldn't have been, rotate it immediately.
-
----
-
-## Render deployment
-
-Three services, one GitHub repo:
-
-| Service | Type | Root dir | Build command | Start command |
-|---|---|---|---|---|
-| AI service | Web Service (Python 3) | `ai-service` | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
-| Backend | Web Service (Node) | `backend` | `npm install` | `node server.js` |
-| Frontend | Static Site | `frontend` | `npm install && npm run build` | Publish dir: `dist` |
-
-Set the environment variables from the table above in each service's
-**Environment** tab on Render (production values, i.e. the actual
-`.onrender.com` URLs, not `localhost`). After changing any env var,
-**redeploy** that service — this is required, not automatic, especially
-for the frontend since `VITE_API_URL` is compiled into the static build.
-
----
-
-## Uptime & free-tier behavior
-
-Render's free Web Services spin down after 15 minutes of inactivity and
-take 30–90 seconds to wake up on the next request. **This is expected
-free-tier behavior, not a bug** — the app is built to tolerate it:
-
-- The backend uses a 90-second timeout when calling the AI service and
-  returns a clear "waking up" message instead of hanging or crashing
-- The frontend shows a "may take a moment to wake up" hint while loading
-- The AI service retries Gemini calls automatically on transient overload
-
-**Do not use an uptime monitor to force all services to stay awake
-24/7** — Render's free plan gives **750 hours/month total, shared across
-all your free Web Services combined**. Two services (backend + AI
-service) pinged non-stop would consume ~1,440 hours/month, blowing past
-that limit and causing Render to disable both services for the rest of
-every month. Instead:
-
-- For casual/demo use: let it sleep naturally; open both `/health` URLs
-  a few minutes before a demo to pre-warm them
-- For guaranteed always-on: upgrade the backend and AI service to
-  Render's Starter tier (~$7/service/month) — no sleep, no hour cap
-- If using an uptime monitor at all, run it only in the days around a
-  scheduled demo, then pause it
-
----
-
-## API reference
-
-### `GET /health` (backend & AI service)
-```json
-{ "status": "ok", "service": "backend", "aiService": "...", "databaseConfigured": true }
 ```
 
-### `POST /api/investigate` (backend)
-**Request:**
-```json
-{
-  "title": "Payment failures",
-  "service": "payment-service",
-  "severity": "high",
-  "description": "Payment requests are returning HTTP 500 errors after a recent deployment."
-}
-```
-**Response:**
-```json
-{
-  "summary": "...",
-  "root_cause": "...",
-  "confidence": 0.91,
-  "evidence": [{ "source": "LOG", "similarity": 0.71, "content": "..." }],
-  "next_steps": ["..."],
-  "incident_id": 12,
-  "created_at": "2026-09-06T10:00:00.000Z"
-}
-```
+### 5. Submit a test incident
 
-### `GET /api/incidents` (backend)
-Returns all stored incidents, most recent first.
+The backend exposes `/api/investigate` for incident analysis. If `DATABASE_URL` is not configured, the backend still returns AI analysis results but writes a warning instead of persisting to PostgreSQL.
 
-### `POST /generate` (AI service — called by the backend, not the frontend directly)
-**Request:** `{ "prompt": "...", "service": "payment-service" }`
-Same response shape as `/api/investigate`, minus `incident_id`/`created_at`.
+## Operational notes
 
----
+- The project supports local model inference without any external AI API.
+- Database persistence is optional for local testing but required for full incident-history storage when configured.
+- All model artifacts are saved locally so the app can operate without network access to a remote model provider.
+- The current model is a practical local prototype built from raw log text, not a production-grade supervised system for a fully labeled enterprise dataset.
 
-## Adding data for a new service
+## Summary
 
-The retriever looks for exact-filename matches (case-sensitive) under `data/`:
-```
-data/logs/<service>.log
-data/metrics/<service>.json
-data/deployments/<service>.json
-```
-If none exist for a given `service` name, the system correctly returns
-"Insufficient relevant evidence was found" rather than guessing — this is
-intentional, not a bug. Add matching files to enable investigation for a
-new service.
-
----
-
-## Testing checklist
-
-| # | Test | Expected |
-|---|---|---|
-| 1 | Investigate `payment-service` with the HTTP 500 description | Confidence > 80%, populated evidence/root cause/next steps |
-| 2 | Investigate a service with no data files | "Insufficient relevant evidence", 0% confidence, HTTP 200 |
-| 3 | Submit with a required field missing | HTTP 400 with a clear message |
-| 4 | View History with zero incidents | "No incidents found", no crash |
-| 5 | View History after several incidents | Most recent first, correct fields |
-| 6 | Stop the AI service, then investigate | Backend returns 502/504, frontend shows a readable error |
-| 7 | Break `DATABASE_URL`, then investigate | AI result still returned, with a `warning` about the failed save |
-| 8 | `curl -I .../health` (HEAD request) | 200 OK, not 405 |
-
----
-
-## Known limitations
-
-- Service name matching is case-sensitive and exact (`payment-service` ≠ `Payment-Service`)
-- Whitespace-only description fields aren't explicitly rejected, since the full prompt template is never truly empty
-- Free-tier hosting means occasional cold-start delays (see above)
-- Gemini model availability/pricing changes over time — if `gemini-3.6-flash` gets deprecated later, update the model name in `ai-service/services/llm_service.py`
-
-## Resolved issues (for reference / project writeup)
-
-This project went through a full real-world debugging cycle, useful to
-mention in an interview as evidence of practical deployment experience:
-
-1. **Backend connecting to `localhost:5432` in production** — fixed by
-   ensuring `DATABASE_URL` is read explicitly in `db.js` rather than
-   falling back to `pg`'s default localhost connection
-2. **CORS blocking the frontend** — fixed by keeping `FRONTEND_URL` in
-   sync with the frontend's actual deployed URL after redeploys
-3. **UptimeRobot showing `405 Method Not Allowed`** — fixed by adding
-   `HEAD` method support to both health endpoints (UptimeRobot's free
-   plan always sends `HEAD`, not `GET`)
-4. **Gemini `404 NOT_FOUND` on `gemini-2.5-flash`** — Google deprecated
-   the model for new API accounts; fixed by switching to
-   `gemini-3.6-flash` with automatic retry and a fallback model on
-   transient `503` overload
-
-## Optional future improvements
-
-Vector database (pgvector), Redis caching, background job queue,
-authentication, structured production logging/monitoring, Docker,
-CI/CD, hybrid search/reranking, agentic follow-up tool calls.
+The repository is now aligned with the requested local-first design: it trains a model from the raw system logs, saves all required artifacts, removes external AI API dependencies, and keeps the backend and AI service working with the locally trained model.

@@ -1,0 +1,22 @@
+{
+  "accuracy": 0.9975,
+  "precision": 0.9845,
+  "recall": 1.0,
+  "f1": 0.9922,
+  "roc_auc": 1.0,
+  "class_distribution": {
+    "normal": 5047,
+    "anomaly": 953
+  },
+  "confusion_matrix": [
+    [
+      1006,
+      3
+    ],
+    [
+      0,
+      191
+    ]
+  ],
+  "classification_report": "              precision    recall  f1-score   support\n\n      normal     1.0000    0.9970    0.9985      1009\n     anomaly     0.9845    1.0000    0.9922       191\n\n    accuracy                         0.9975      1200\n   macro avg     0.9923    0.9985    0.9954      1200\nweighted avg     0.9975    0.9975    0.9975      1200\n"
+}
